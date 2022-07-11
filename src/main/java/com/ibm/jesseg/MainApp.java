@@ -43,14 +43,16 @@ public class MainApp {
             } catch (BindException e) {
                 throw new IOException("Port " + port + " is already in use", e);
             }
-            HTTPServer server = new HTTPServer.Builder()
-                    .withHttpServer(rootServer)
-                    .build();
             logger.println("Verifying metrics collection....");
             for (SQLMetricPopulator populator : populators) {
                 populator.gatherNow(12);
             }
             logger.println_success("Metrics collection verified.");
+            
+            HTTPServer server = new HTTPServer.Builder()
+                    .withHttpServer(rootServer)
+                    .build();
+                    
             String successMessage = "\n\n\n";
             successMessage += "==============================================================\n";
             successMessage += "Successfully started Prometheus client on port " + port + "\n";
