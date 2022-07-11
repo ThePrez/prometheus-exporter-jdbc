@@ -102,7 +102,7 @@ hostname__column
 
 (documentation forthcoming)
 
-# Metrics gathered by default
+# Metrics gathered with default config
 
 - TOTAL_JOBS_IN_SYSTEM
 - MAXIMUM_JOBS_IN_SYSTEM
