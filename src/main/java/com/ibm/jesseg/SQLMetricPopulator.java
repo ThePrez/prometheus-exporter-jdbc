@@ -1,5 +1,6 @@
 package com.ibm.jesseg;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -14,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.StringUtils;
+import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.AS400JDBCDataSource;
 
 import io.prometheus.client.CollectorRegistry;
@@ -42,13 +44,14 @@ public class SQLMetricPopulator {
     m_logger = _logger;
     m_sql = _sql;
     m_interval = _interval;
+    final AS400 as400;
     if (isIBMi()) {
-      m_datasource = new AS400JDBCDataSource("localhost", "*CURRENT", "*CURRENT");
+       as400 = new AS400("localhost", "*CURRENT", "*CURRENT");
       String localhost = "unknown";
       try {
         localhost = InetAddress.getLocalHost().getHostName().replaceAll("\\..*", "");
-      } catch (UnknownHostException e) {
-        e.printStackTrace();
+      } catch (Exception e) {
+        m_logger.printfln_warn("WARNING: could not resolve local host name (%s)", e.getLocalizedMessage());
       }
       m_systemName = localhost;
     } else {
@@ -64,9 +67,17 @@ public class SQLMetricPopulator {
       if (StringUtils.isEmpty(password)) {
         throw new IOException("password is required");
       }
-      m_datasource = new AS400JDBCDataSource(hostname, username, password);
+       as400 = new AS400(hostname, username, password);
+      
       m_systemName = hostname;
     }
+    try {
+      as400.setGuiAvailable(false);
+    } catch (PropertyVetoException e1) {
+      m_logger.printExceptionStack_verbose(e1);
+    }
+    m_datasource = new AS400JDBCDataSource(as400);
+ 
     m_sqlThread = new Thread(() -> {
       while (true) {
         try {

@@ -13,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.github.theprez.jcmdutils.AppLogger;
+import com.github.theprez.jcmdutils.ConsoleQuestionAsker;
 import com.github.theprez.jcmdutils.StringUtils;
 
 public class Config {
@@ -21,6 +22,9 @@ public class Config {
   private final JSONObject m_json;
   private AppLogger m_logger;
   private File m_file;
+  private String m_password;
+  private String m_hostname;
+  private String m_username;
 
   public static class SQLQuery {
     public final String m_sql;
@@ -76,18 +80,37 @@ public class Config {
   }
 
   public String getHostName() {
+    if (StringUtils.isNonEmpty(m_hostname)) {
+      return m_hostname;
+    }
     Object val = m_json.get("hostname");
-    return null == val ? null : val.toString();
+    if (null == val) {
+      return m_hostname = ConsoleQuestionAsker.get().askNonEmptyStringQuestion(m_logger, "", "Enter system name: ");
+    }
+    return m_hostname = val.toString();
   }
 
-  public String getPassword() {
+  public String getPassword() throws IOException {
+    if (StringUtils.isNonEmpty(m_password)) {
+      return m_password;
+    }
     Object val = m_json.get("password");
-    return null == val ? null : val.toString();
+    if (null == val) {
+      return m_password = ConsoleQuestionAsker.get().askUserForPwd("Password: ");
+    }
+    m_logger.printfln_warn("WARNING: Password is stored in config file %s. THIS IS NOT SECURE!", m_file.getAbsolutePath());
+    return m_password = val.toString();
   }
 
   public String getUsername() {
+    if (StringUtils.isNonEmpty(m_username)) {
+      return m_username;
+    }
     Object val = m_json.get("username");
-    return null == val ? null : val.toString();
+    if (null == val) {
+      return m_username = ConsoleQuestionAsker.get().askNonEmptyStringQuestion(m_logger, "", "Username:");
+    }
+    return m_username = val.toString();
   }
 
   public int getPort(AppLogger _logger) {
