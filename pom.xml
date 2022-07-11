@@ -6,7 +6,7 @@
   <groupId>com.ibm.jesseg</groupId>
   <artifactId>ibmi-prom-client</artifactId>
   <packaging>jar</packaging>
-  <version>0.1</version>
+  <version>0.3.0</version>
 
 
   <properties>
@@ -14,30 +14,35 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
-    <dependencies>
-      <dependency>
-        <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient</artifactId>
-        <version>0.16.0</version>
+  <dependencies>
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient</artifactId>
+      <version>0.16.0</version>
     </dependency>
-    
-      <dependency>
-        <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_httpserver</artifactId>
-        <version>0.16.0</version>
-      </dependency>
-      <dependency>
-        <groupId>net.sf.jt400</groupId>
-        <artifactId>jt400</artifactId>
-        <version>11.0</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.json-simple</groupId>
-        <artifactId>json-simple</artifactId>
-        <version>1.1.1</version>
+
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_httpserver</artifactId>
+      <version>0.16.0</version>
     </dependency>
-    
-    </dependencies>
+    <dependency>
+      <groupId>net.sf.jt400</groupId>
+      <artifactId>jt400</artifactId>
+      <version>11.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.json-simple</groupId>
+      <artifactId>json-simple</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.theprez</groupId>
+      <artifactId>jcmdutils</artifactId>
+      <version>0.1.5</version>
+    </dependency>
+
+  </dependencies>
 
   <build>
     <defaultGoal>install</defaultGoal>
@@ -71,29 +76,29 @@
           <includePluginDependencies>false</includePluginDependencies>
         </configuration>
       </plugin>
-            <!-- Allows the program to be built into a single executable jar -->
-            <plugin>
-              <artifactId>maven-assembly-plugin</artifactId>
-              <executions>
-                <execution>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>single</goal>
-                  </goals>
-                </execution>
-              </executions>
-              <configuration>
-                <archive>
-                  <manifest>
-                    <addClasspath>true</addClasspath>
-                    <mainClass>com.ibm.jesseg.MainApp</mainClass>
-                  </manifest>
-                </archive>
-                <descriptorRefs>
-                  <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-              </configuration>
-            </plugin>
+      <!-- Allows the program to be built into a single executable jar -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>com.ibm.jesseg.MainApp</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
 
     </plugins>
   </build>
