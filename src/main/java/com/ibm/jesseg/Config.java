@@ -96,6 +96,10 @@ public class Config {
     }
     Object val = m_json.get("password");
     if (null == val) {
+      String pwEnv = System.getenv("PASSWORD");
+      if(StringUtils.isNonEmpty(pwEnv)) {
+        return m_password=pwEnv;
+      }
       return m_password = ConsoleQuestionAsker.get().askUserForPwd("Password: ");
     }
     m_logger.printfln_warn("WARNING: Password is stored in config file %s. THIS IS NOT SECURE!", m_file.getAbsolutePath());
