@@ -11,6 +11,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.theprez.jcmdutils.AppLogger;
@@ -38,15 +39,17 @@ public class SQLMetricPopulator {
   private volatile long m_lastSuccessTs = 0;
   private final AppLogger m_logger;
   private final Thread m_sqlThread;
+  private final CollectorRegistry m_registry;
 
   public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, long _interval, String _sql)
       throws IOException, SQLException {
     m_logger = _logger;
     m_sql = _sql;
     m_interval = _interval;
+    m_registry = _registry;
     final AS400 as400;
     if (isIBMi()) {
-       as400 = new AS400("localhost", "*CURRENT", "*CURRENT");
+      as400 = new AS400("localhost", "*CURRENT", "*CURRENT");
       String localhost = "unknown";
       try {
         localhost = InetAddress.getLocalHost().getHostName().replaceAll("\\..*", "");
@@ -67,8 +70,8 @@ public class SQLMetricPopulator {
       if (StringUtils.isEmpty(password)) {
         throw new IOException("password is required");
       }
-       as400 = new AS400(hostname, username, password);
-      
+      as400 = new AS400(hostname, username, password);
+
       m_systemName = hostname;
     }
     try {
@@ -77,7 +80,7 @@ public class SQLMetricPopulator {
       m_logger.printExceptionStack_verbose(e1);
     }
     m_datasource = new AS400JDBCDataSource(as400);
- 
+
     m_sqlThread = new Thread(() -> {
       while (true) {
         try {
@@ -110,7 +113,6 @@ public class SQLMetricPopulator {
       return;
     }
 
-    
   }
 
   private boolean isIBMi() {
@@ -120,27 +122,37 @@ public class SQLMetricPopulator {
 
   private void gatherData() throws SQLException {
     synchronized (m_requestLock) {
-      if(0 == m_gauges.size()) {
+      if (0 == m_gauges.size()) {
         return;
       }
       m_logger.println_verbose("gathering metrics...");
-      ResultSet rs = getStatement().executeQuery();
-      if (rs.next()) {
-        int columnCount = rs.getMetaData().getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-          Gauge gauge = m_gauges.get(i);
-          if (null == gauge) {
-            continue;
+      try {
+        ResultSet rs = getStatement().executeQuery();
+        if (rs.next()) {
+          int columnCount = rs.getMetaData().getColumnCount();
+          for (int i = 1; i <= columnCount; i++) {
+            Gauge gauge = m_gauges.get(i);
+            if (null == gauge) {
+              continue;
+            }
+            double value = rs.getDouble(i);
+            gauge.set(value);
           }
-          double value = rs.getDouble(i);
-          gauge.set(value);
         }
-      }
-      rs.close();
-      m_numCollections++;
-      m_lastSuccessTs = System.currentTimeMillis();
-      if(1 == m_numCollections) {
-        m_sqlThread.start();
+        rs.close();
+        m_numCollections++;
+        m_lastSuccessTs = System.currentTimeMillis();
+        if (1 == m_numCollections) {
+          m_sqlThread.start();
+        }
+      } catch (Exception e) {
+        m_logger.println_err("ERROR!! ABORTING COLLECTION!! Cause: " + e.getLocalizedMessage());
+        m_logger.printExceptionStack_verbose(e);
+        for (Entry<Integer, Gauge> gaugeEntry : m_gauges.entrySet()) {
+          Gauge gauge = gaugeEntry.getValue();
+          m_registry.unregister(gauge);
+        }
+        m_gauges.clear();
       }
     }
   }
