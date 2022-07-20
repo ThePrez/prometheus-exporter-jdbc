@@ -187,3 +187,7 @@ hostname__column
 - JOURNAL_RECOVERY_COUNT
 - JOURNAL_CACHE_WAIT_TIME
 - REMOTE_CONNECTIONS
+
+# Sample screenshot (visualization w/Grafana)
+
+![image](https://user-images.githubusercontent.com/17914061/180038306-30724eae-83b2-42c3-b6d5-da2e9b239a25.png)
