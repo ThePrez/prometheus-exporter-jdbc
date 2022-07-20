@@ -92,6 +92,12 @@ public class MainApp {
                 +
                 "    },\n" +
                 "    {\n" +
+                "      \"name\": \"System Activity\",\n" +
+                "      \"interval\": 20,\n" +
+                "      \"sql\": \"SELECT AVERAGE_CPU_UTILIZATION as AVERAGE_CPU_UTILIZATION_REAL, AVERAGE_CPU_RATE as AVERAGE_CPU_RATE_REAL FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())\"\n"
+                +
+                "    },\n" +
+                "    {\n" +
                 "      \"name\": \"number of remote connections\",\n" +
                 "      \"interval\": 60,\n" +
                 "      \"sql\": \"select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'\"\n"

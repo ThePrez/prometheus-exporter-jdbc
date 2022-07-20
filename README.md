@@ -66,14 +66,16 @@ following:
       "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_STATUS(RESET_STATISTICS=>'YES',DETAILED_INFO=>'ALL')) X"
     },
     {
+      "name": "System Activity",
+      "interval": 20,
+      "sql": "SELECT AVERAGE_CPU_UTILIZATION as AVERAGE_CPU_UTILIZATION_REAL, AVERAGE_CPU_RATE as AVERAGE_CPU_RATE_REAL FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())"
+    },
+    {
       "name": "number of remote connections",
       "interval": 60,
       "sql": "select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'"
     }
-  ],
-  "username": "myusername",
-  "password": "mypassword",
-  "hostname": "mysystem"
+  ]
 }
 ```
 
@@ -116,6 +118,8 @@ hostname__column
 - CURRENT_CPU_CAPACITY
 - AVERAGE_CPU_RATE
 - AVERAGE_CPU_UTILIZATION
+- AVERAGE_CPU_RATE_REAL
+- AVERAGE_CPU_UTILIZATION_REAL
 - MINIMUM_CPU_UTILIZATION
 - MAXIMUM_CPU_UTILIZATION
 - SQL_CPU_UTILIZATION
