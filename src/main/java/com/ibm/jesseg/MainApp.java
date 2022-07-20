@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.BindException;
 import java.net.InetSocketAddress;
@@ -38,6 +39,7 @@ public class MainApp {
                         query.getSql()));
             }
             rootServer = com.sun.net.httpserver.HttpServer.create();
+
             try {
                 rootServer.bind(new InetSocketAddress(port), 100);
             } catch (BindException e) {
@@ -68,6 +70,20 @@ public class MainApp {
         }
     }
 
+    private static File writeResourcesToFile(AppLogger _logger, File _dest, String _resource) throws IOException {
+        InputStream in = MainApp.class.getResourceAsStream(_resource);
+        if (null == in) {
+            throw new IOException("Could not find resource to create "+_dest.getName());
+        }
+        try(FileOutputStream out = new FileOutputStream(_dest, false)) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
+            }
+        }
+        return _dest;
+    }
     private static File getConfigFile(AppLogger _logger) throws IOException {
         File ret = new File(System.getProperty("promclient.config", "config.json"));
         if (ret.exists()) {
@@ -82,32 +98,6 @@ public class MainApp {
         if (!isCreatingDefault) {
             throw new IOException("No configuration file");
         }
-        String fileContents = "{\n" +
-                "  \"port\": 8910,\n" +
-                "  \"queries\": [\n" +
-                "    {\n" +
-                "      \"name\": \"System Statistics\",\n" +
-                "      \"interval\": 60,\n" +
-                "      \"sql\": \"SELECT * FROM TABLE(QSYS2.SYSTEM_STATUS(RESET_STATISTICS=>'YES',DETAILED_INFO=>'ALL')) X\"\n"
-                +
-                "    },\n" +
-                "    {\n" +
-                "      \"name\": \"System Activity\",\n" +
-                "      \"interval\": 20,\n" +
-                "      \"sql\": \"SELECT AVERAGE_CPU_UTILIZATION as AVERAGE_CPU_UTILIZATION_REAL, AVERAGE_CPU_RATE as AVERAGE_CPU_RATE_REAL FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())\"\n"
-                +
-                "    },\n" +
-                "    {\n" +
-                "      \"name\": \"number of remote connections\",\n" +
-                "      \"interval\": 60,\n" +
-                "      \"sql\": \"select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'\"\n"
-                +
-                "    }\n" +
-                "  ]\n" +
-                "}";
-        try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(ret), "UTF-8")) {
-            out.write(fileContents);
-            return ret.getAbsoluteFile();
-        }
+        return writeResourcesToFile(_logger, ret, "config.json");
     }
 }
