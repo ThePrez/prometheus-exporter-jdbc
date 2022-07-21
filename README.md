@@ -113,6 +113,8 @@ java -jar prom-client-ibmi.jar sc
 Follow the on-screen instructions. A `prometheus.yml` file will be created.
 Do not delete this file.
 
+The default configuration adds a `prometheus` to the `autostart` group
+to be launched automatically at IPL.
 
 
 # Installation and Startup (off IBM i)
