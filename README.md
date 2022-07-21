@@ -1,5 +1,10 @@
-# Prom-client-IBMi
-Prometheus Client for IBM i
+# Prometheus Client for IBM i
+
+Prometheus Client for IBM i. This provides an interface for passive metrics collection.
+That is, Prometheus can scrape IBM i (via this client) for metrics. 
+
+The metrics are customizable. Any numeric metric available through SQL can
+be monitored using this client. 
 
 # Installation and Startup (IBM i)
 
