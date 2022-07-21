@@ -112,6 +112,33 @@ Do not delete this file.
 
 # Installation and Startup (off IBM i)
 
+This Prometheus client can be run on a different platform and connect remotely to
+IBM i to gather statistics. Currently, however, only one remote system at a time
+is supported. 
+
+To enable this, populate `username`, `hostname`, and (optionally) `password` in
+the `config.json` file that is generated upon initial startup.
+
+For instance:
+
+```json
+  "username": "myuser",
+  "hostname": "systemname",
+  "password": "mypassword"
+```
+
+Note, however, that putting your password in a plaintext file is not recommended. 
+Instead, configure the username and hostname. You will be prompted for the password
+at runtime. 
+
+For instance:
+
+```json
+  "username": "myuser",
+  "hostname": "systemname"
+```
+
+
 (documentation forthcoming)
 
 # Metrics gathered with default config
