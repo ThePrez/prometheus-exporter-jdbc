@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,8 +21,30 @@ import io.prometheus.client.exporter.HTTPServer;
 
 public class MainApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] _args) {
         AppLogger logger = AppLogger.getSingleton(Boolean.getBoolean("promclient.verbose"));
+
+        List<String> args = Arrays.asList(_args);
+        if(args.contains("sc")  ){
+            try {
+                File yaml = writeResourcesToFile(logger, new File("prometheus.yml"), "prometheus.yml");
+                logger.println_success("Wrote Service Commander definition to file "+yaml.getAbsolutePath());
+                logger.println("");
+                logger.println("To register with Service Commander, first install Service Commander");
+                logger.println("version 1.5.0 or newer. ");
+                logger.println("");
+                logger.println("Then, run the following command to register this service for the current user:");
+                logger.printfln("    ln -sf %s $HOME/.sc/services/%s", yaml.getAbsolutePath(), yaml.getName());
+                logger.println("");
+                logger.println("Or, run the following command to register this service for all users:");
+                logger.printfln("    ln -sf %s /QOpenSys/etc/sf/services/%s", yaml.getAbsolutePath(), yaml.getName());
+            }catch(Exception e) {
+                logger.printfln_err("Error writing prometheus.yml to file: %s", e.getMessage());
+                System.exit(-3);
+            }
+            return;
+        }
+
         com.sun.net.httpserver.HttpServer rootServer = null;
 
         try {

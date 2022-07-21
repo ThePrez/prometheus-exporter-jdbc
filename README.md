@@ -97,7 +97,17 @@ hostname__column
 
 # Managing with Service Commander
 
-(documentation forthcoming)
+First, install Service Commander (package name `service-commander`)
+version 1.5.1 or later. 
+
+Then, from a command line, `cd` to the directory where you placed
+`prom-client-ibmi.jar` and run:
+```bash
+java -jar prom-client-ibmi.jar sc
+```
+Follow the on-screen instructions. A `prometheus.yml` file will be created.
+Do not delete this file.
+
 
 
 # Installation and Startup (off IBM i)
