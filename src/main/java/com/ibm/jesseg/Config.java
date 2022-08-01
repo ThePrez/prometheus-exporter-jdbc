@@ -236,7 +236,7 @@ public class Config {
     if (StringUtils.isNonEmpty(m_driverUrl)) {
       return m_driverClass;
     }
-    Object val = m_json.get("driver_uri");
+    Object val = m_json.get("driver_class");
     if (null == val) {
       return m_driverClass = AS400JDBCDriver.class.getName();
     }
