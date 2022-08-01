@@ -40,13 +40,18 @@ public class SQLMetricPopulator {
   private final AppLogger m_logger;
   private final Thread m_sqlThread;
   private final CollectorRegistry m_registry;
+  private boolean m_includeHostname;
+  private String m_gaugePrefix;
 
-  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, long _interval, String _sql)
+  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, long _interval,
+      String _sql, boolean _includeHostname, String _gaugePrefix)
       throws IOException, SQLException {
     m_logger = _logger;
     m_sql = _sql;
     m_interval = _interval;
     m_registry = _registry;
+    m_includeHostname = _includeHostname;
+    m_gaugePrefix = _gaugePrefix;
     final AS400 as400;
     if (isIBMi()) {
       as400 = new AS400("localhost", "*CURRENT", "*CURRENT");
@@ -103,9 +108,11 @@ public class SQLMetricPopulator {
       if (!isColumnTypeNumeric(columnType)) {
         continue;
       }
-      m_logger.println_verbose("registering collector for " + columnName + " of type " + columnTypeStr);
+      String gaugeName = getGaugeName(columnName);
+      m_logger.printfln_verbose("registering collector: column %s of type %s (gauge name '%s')", columnName, columnTypeStr, gaugeName);
+
       Gauge columnGauge = Gauge.build()
-          .name(m_systemName + "__" + columnName).help(columnLabel).register();
+          .name(gaugeName).help(columnLabel).register();
       m_gauges.put(i, columnGauge);
     }
     if (0 == m_gauges.size()) {
@@ -113,6 +120,17 @@ public class SQLMetricPopulator {
       return;
     }
 
+  }
+
+  private String getGaugeName(String _columnName) {
+    String ret = "";
+    if (m_includeHostname) {
+      ret += m_systemName + "__";
+    }
+    if (StringUtils.isNonEmpty(m_gaugePrefix)) {
+      ret += m_gaugePrefix + "__";
+    }
+    ret += _columnName;return ret;
   }
 
   private boolean isIBMi() {

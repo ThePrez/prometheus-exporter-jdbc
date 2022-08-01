@@ -22,7 +22,7 @@ import io.prometheus.client.exporter.HTTPServer;
 public class MainApp {
 
     public static void main(String[] _args) {
-        AppLogger logger = AppLogger.getSingleton(Boolean.getBoolean("promclient.verbose"));
+       AppLogger logger = AppLogger.getSingleton(Boolean.getBoolean("promclient.verbose"));
 
         List<String> args = Arrays.asList(_args);
         if(args.contains("sc")  ){
@@ -59,7 +59,10 @@ public class MainApp {
             for (SQLQuery query : config.getSQLQueries()) {
                 populators.add(new SQLMetricPopulator(logger, registry, config,
                         query.getInterval(),
-                        query.getSql()));
+                        query.getSql(), 
+                        query.getShowHostname(), 
+                        query.getGaugePrefix()
+                        ));
             }
             rootServer = com.sun.net.httpserver.HttpServer.create();
 

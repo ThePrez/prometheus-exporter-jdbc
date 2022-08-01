@@ -29,10 +29,13 @@ public class Config {
   public static class SQLQuery {
     public final String m_sql;
     public final long m_interval;
+    private final String m_gaugePrefix;
+    private final boolean m_showHostName;
 
-    public SQLQuery(String _sql, long _interval) {
+    public SQLQuery(String _sql, long _interval, final boolean _showHostName, final String _gaugePrefix) {
       m_sql = _sql;
-      m_interval = _interval;
+      m_interval = _interval;m_showHostName=_showHostName;
+      m_gaugePrefix=_gaugePrefix;
     }
 
     public long getInterval() {
@@ -41,6 +44,14 @@ public class Config {
 
     public String getSql() {
       return m_sql;
+    }
+
+    public boolean getShowHostname() {
+      return m_showHostName;
+    }
+
+    public String getGaugePrefix() {
+      return m_gaugePrefix;
     }
   }
 
@@ -73,8 +84,16 @@ public class Config {
         m_logger.printfln_err("No interval found for query '%s' in config file %s", sql, m_file.getAbsolutePath());
         continue;
       }
+      boolean isIncludeHostname = true;
+      Object isIncludeHostnameVal = query.get("include_hostname");
+      if(null != isIncludeHostnameVal) {
+        isIncludeHostname = (Boolean) isIncludeHostnameVal;
+      }
+      Object gaugePrefixObj = query.get("prefix");
+      String gaugePrefix = null == gaugePrefixObj ? null: gaugePrefixObj.toString();
+      
       final long interval = (long) intervalObj;
-      ret.add(new SQLQuery(sql, interval));
+      ret.add(new SQLQuery(sql, interval, isIncludeHostname, gaugePrefix));
     }
     return ret;
   }
