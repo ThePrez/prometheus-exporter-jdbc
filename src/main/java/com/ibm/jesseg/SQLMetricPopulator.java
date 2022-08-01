@@ -1,10 +1,6 @@
 package com.ibm.jesseg;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -16,8 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.StringUtils;
-import com.ibm.as400.access.AS400;
-import com.ibm.as400.access.AS400JDBCDataSource;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
@@ -26,15 +20,12 @@ public class SQLMetricPopulator {
   private final Object m_requestLock = new ReentrantLock();
   private final String m_sql;
   private volatile long m_numCollections = 0;
-  private Connection m_connection = null;
 
-  private final AS400JDBCDataSource m_datasource;
 
   private final long m_interval;
 
   private PreparedStatement m_statement = null;
 
-  private final String m_systemName;
   private Map<String, Gauge> m_gauges = new HashMap<String, Gauge>();
   private volatile long m_lastSuccessTs = 0;
   private final AppLogger m_logger;
@@ -43,8 +34,12 @@ public class SQLMetricPopulator {
   private boolean m_includeHostname;
   private String m_gaugePrefix;
   private boolean m_isMultiRow;
+  private final Config m_config;
+  private ConnectionManager m_connMan;
 
-  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, long _interval,
+  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, 
+  ConnectionManager _connMan,
+  long _interval,
       boolean _isMultiRow,
       String _sql, boolean _includeHostname, String _gaugePrefix)
       throws IOException, SQLException {
@@ -55,40 +50,8 @@ public class SQLMetricPopulator {
     m_includeHostname = _includeHostname;
     m_gaugePrefix = _gaugePrefix;
     m_isMultiRow = _isMultiRow;
-    final AS400 as400;
-    if (isIBMi()) {
-      as400 = new AS400("localhost", "*CURRENT", "*CURRENT");
-      String localhost = "unknown";
-      try {
-        localhost = InetAddress.getLocalHost().getHostName();
-      } catch (Exception e) {
-        m_logger.printfln_warn("WARNING: could not resolve local host name (%s)", e.getLocalizedMessage());
-      }
-      m_systemName = localhost;
-    } else {
-      String hostname = _config.getHostName();
-      String username = _config.getUsername();
-      String password = _config.getPassword();
-      if (StringUtils.isEmpty(hostname)) {
-        throw new IOException("hostname is required");
-      }
-      if (StringUtils.isEmpty(username)) {
-        throw new IOException("username is required");
-      }
-      if (StringUtils.isEmpty(password)) {
-        throw new IOException("password is required");
-      }
-      as400 = new AS400(hostname, username, password);
-
-      m_systemName = hostname;
-    }
-    try {
-      as400.setGuiAvailable(false);
-    } catch (PropertyVetoException e1) {
-      m_logger.printExceptionStack_verbose(e1);
-    }
-    m_datasource = new AS400JDBCDataSource(as400);
-
+    m_config = _config;
+    m_connMan = _connMan;
     m_sqlThread = new Thread(() -> {
       while (true) {
         try {
@@ -139,7 +102,7 @@ public class SQLMetricPopulator {
   private String getGaugeName(String _columnName, String _rowName) {
     String ret = "";
     if (m_includeHostname) {
-      ret += m_systemName.replaceAll("\\..*", "") + "__";
+      ret += m_config.getHostNameForDisplay().replaceAll("\\..*", "") + "__";
     }
     if (StringUtils.isNonEmpty(m_gaugePrefix)) {
       ret += m_gaugePrefix + "__";
@@ -149,11 +112,6 @@ public class SQLMetricPopulator {
     }
     ret += _columnName;
     return ret.replaceAll("[^_A-Za-z0-9]", "");
-  }
-
-  private boolean isIBMi() {
-    String osname = System.getProperty("os.name", "").toLowerCase();
-    return osname.equals("os400") || osname.equals("os/400");
   }
 
   private void gatherData() throws SQLException {
@@ -215,12 +173,9 @@ public class SQLMetricPopulator {
     }
   }
 
-  private PreparedStatement getStatement() throws SQLException {
-    if (null == m_connection || m_connection.isClosed()) {
-      m_connection = m_datasource.getConnection();
-    }
+  private PreparedStatement getStatement() throws SQLException, IOException {
     if (null == m_statement || m_statement.isClosed()) {
-      m_statement = m_connection.prepareStatement(m_sql);
+      m_statement = m_connMan.getConnection().prepareStatement(m_sql);
     }
     return m_statement;
   }

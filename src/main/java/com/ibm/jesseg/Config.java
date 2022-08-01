@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.json.simple.parser.ParseException;
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.ConsoleQuestionAsker;
 import com.github.theprez.jcmdutils.StringUtils;
+import com.ibm.as400.access.AS400JDBCDriver;
 
 public class Config {
 
@@ -25,6 +27,9 @@ public class Config {
   private String m_password;
   private String m_hostname;
   private String m_username;
+  private String m_driverClass;
+  private String m_driverUrl;
+  private String m_displayHostname;
 
   public static class SQLQuery {
     public final String m_sql;
@@ -116,13 +121,40 @@ public class Config {
     return ret;
   }
 
-  public String getHostName() {
+  private boolean isIBMi() {
+    String osname = System.getProperty("os.name", "").toLowerCase();
+    return osname.equals("os400") || osname.equals("os/400");
+  }
+  public String getHostNameForConnection() {
     if (StringUtils.isNonEmpty(m_hostname)) {
       return m_hostname;
     }
     Object val = m_json.get("hostname");
     if (null == val) {
+      if(isIBMi()) {
+        return m_hostname = "localhost";
+      }
       return m_hostname = ConsoleQuestionAsker.get().askNonEmptyStringQuestion(m_logger, "", "Enter system name: ");
+    }
+    return m_hostname = val.toString();
+  }
+  public String getHostNameForDisplay() {
+    if (StringUtils.isNonEmpty(m_displayHostname)) {
+      return m_displayHostname;
+    }
+
+    Object val = m_json.get("hostname");
+    if (null == val) {
+      if(isIBMi()) {
+        String localhost = "unknown";
+        try {
+          localhost = InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+          m_logger.printfln_warn("WARNING: could not resolve local host name (%s)", e.getLocalizedMessage());
+        }
+        return m_displayHostname = localhost;
+      }
+      m_displayHostname = getHostNameForConnection();
     }
     return m_hostname = val.toString();
   }
@@ -133,6 +165,9 @@ public class Config {
     }
     Object val = m_json.get("password");
     if (null == val) {
+      if(isIBMi()) {
+        return m_password = "*CURRENT";
+      }
       String pwEnv = System.getenv("PASSWORD");
       if(StringUtils.isNonEmpty(pwEnv)) {
         return m_password=pwEnv;
@@ -149,6 +184,9 @@ public class Config {
     }
     Object val = m_json.get("username");
     if (null == val) {
+      if(isIBMi()) {
+        return m_username = "*CURRENT";
+      }
       return m_username = ConsoleQuestionAsker.get().askNonEmptyStringQuestion(m_logger, "", "Username:");
     }
     return m_username = val.toString();
@@ -178,5 +216,30 @@ public class Config {
       _logger.printfln_err("Unable to use default port. Falling back to tool default");
       return DEFAULT_PORT;
     }
+  }
+
+  public String getDriverUrl() {
+    if (StringUtils.isNonEmpty(m_driverUrl)) {
+      return m_driverUrl;
+    }
+    Object val = m_json.get("driver_uri");
+    if (null == val) {
+      if(isIBMi()) {
+        return m_driverUrl = "jdbc:as400://localhost";
+      }
+      return m_driverUrl = ConsoleQuestionAsker.get().askNonEmptyStringQuestion(m_logger, "", "JDBC Driver URI:");
+    }
+    return m_driverUrl = val.toString();
+  }
+
+  public String getDriverClass() {
+    if (StringUtils.isNonEmpty(m_driverUrl)) {
+      return m_driverClass;
+    }
+    Object val = m_json.get("driver_uri");
+    if (null == val) {
+      return m_driverClass = AS400JDBCDriver.class.getName();
+    }
+    return m_driverClass = val.toString();
   }
 }

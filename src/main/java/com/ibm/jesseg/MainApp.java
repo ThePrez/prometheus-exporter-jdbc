@@ -58,6 +58,7 @@ public class MainApp {
             List<SQLMetricPopulator> populators = new LinkedList<SQLMetricPopulator>();
             for (SQLQuery query : config.getSQLQueries()) {
                 populators.add(new SQLMetricPopulator(logger, registry, config,
+                        new ConnectionManager(config), 
                         query.getInterval(),
                         query.isMultiRow(), 
                         query.getSql(), 
