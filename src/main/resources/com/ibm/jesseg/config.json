@@ -1,0 +1,31 @@
+{
+  "port": 8910,
+
+  "queries": [{
+      "name": "System Statistics",
+      "interval": 60,
+      "enabled": true,
+      "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_STATUS(RESET_STATISTICS=>'YES',DETAILED_INFO=>'ALL')) X"
+    },
+    {
+      "name": "System Activity",
+      "interval": 20,
+      "prefix": "SYSACT",
+      "include_hostname": true,
+      "enabled": false,
+      "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())"
+    },
+    {
+      "name": "number of remote connections",
+      "interval": 60,
+      "sql": "select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'"
+    },
+    {
+      "name": "Memory Pool Info",
+      "interval": 100,
+      "multi_row": true,
+      "prefix": "MEMPOOL",
+      "sql": "SELECT POOL_NAME,CURRENT_SIZE,DEFINED_SIZE,MAXIMUM_ACTIVE_THREADS,CURRENT_THREADS,RESERVED_SIZE FROM TABLE(QSYS2.MEMORY_POOL(RESET_STATISTICS=>'YES')) X"
+    }
+  ]
+}

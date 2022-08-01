@@ -31,11 +31,13 @@ public class Config {
     public final long m_interval;
     private final String m_gaugePrefix;
     private final boolean m_showHostName;
+    private final boolean m_isMultiRow;
 
-    public SQLQuery(String _sql, long _interval, final boolean _showHostName, final String _gaugePrefix) {
+    public SQLQuery(boolean _isMultiRow, String _sql, long _interval, final boolean _showHostName, final String _gaugePrefix) {
       m_sql = _sql;
       m_interval = _interval;m_showHostName=_showHostName;
       m_gaugePrefix=_gaugePrefix;
+      m_isMultiRow = _isMultiRow;
     }
 
     public long getInterval() {
@@ -52,6 +54,10 @@ public class Config {
 
     public String getGaugePrefix() {
       return m_gaugePrefix;
+    }
+
+    public boolean isMultiRow() {
+      return m_isMultiRow;
     }
   }
 
@@ -74,6 +80,18 @@ public class Config {
     int size = queries.size();
     for (int i = 0; i < size; i++) {
       final JSONObject query = (JSONObject) queries.get(i);
+      Object enabledObj = query.get("enabled");
+      if (null != enabledObj) {
+        if(!Boolean.valueOf(enabledObj.toString())) {
+          continue;
+        }
+      }
+      boolean isMultiRow = false;
+      Object multiRowObj = query.get("multi_row");
+      if (null != multiRowObj) {
+        isMultiRow  = Boolean.valueOf(multiRowObj.toString());
+      }
+
       final String sql = (String) query.get("sql");
       if (StringUtils.isEmpty(sql)) {
         m_logger.printfln_err("No SQL found for query in config file %s", m_file.getAbsolutePath());
@@ -91,9 +109,9 @@ public class Config {
       }
       Object gaugePrefixObj = query.get("prefix");
       String gaugePrefix = null == gaugePrefixObj ? null: gaugePrefixObj.toString();
-      
+
       final long interval = (long) intervalObj;
-      ret.add(new SQLQuery(sql, interval, isIncludeHostname, gaugePrefix));
+      ret.add(new SQLQuery(isMultiRow, sql, interval, isIncludeHostname, gaugePrefix));
     }
     return ret;
   }

@@ -59,6 +59,7 @@ public class MainApp {
             for (SQLQuery query : config.getSQLQueries()) {
                 populators.add(new SQLMetricPopulator(logger, registry, config,
                         query.getInterval(),
+                        query.isMultiRow(), 
                         query.getSql(), 
                         query.getShowHostname(), 
                         query.getGaugePrefix()
