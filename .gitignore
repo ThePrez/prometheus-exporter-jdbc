@@ -1,4 +1,3 @@
-config.json
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -12,3 +11,4 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 settings.json
 prom.yml
+config.json
