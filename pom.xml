@@ -6,7 +6,7 @@
   <groupId>com.ibm.jesseg</groupId>
   <artifactId>ibmi-prom-client</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.2</version>
+  <version>0.8.0</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +25,16 @@
       <artifactId>simpleclient_httpserver</artifactId>
       <version>0.16.0</version>
     </dependency>
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_servlet</artifactId>
+      <version>0.0.21</version>
+  </dependency>
+  <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>8.1.7.v20120910</version>
+  </dependency>
     <dependency>
       <groupId>net.sf.jt400</groupId>
       <artifactId>jt400</artifactId>

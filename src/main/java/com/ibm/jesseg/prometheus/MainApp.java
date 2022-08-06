@@ -5,22 +5,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.BindException;
-import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.ConsoleQuestionAsker;
 import com.ibm.jesseg.prometheus.Config.SQLQuery;
 
 import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.HTTPServer;
+import io.prometheus.client.exporter.MetricsServlet;
 
 public class MainApp {
 
     public static void main(String[] _args) {
-        AppLogger logger = AppLogger.getSingleton(Boolean.getBoolean("promclient.verbose"));
+        AppLogger logger = AppLogger.getSingleton(!Boolean.getBoolean("promclient.verbose"));
 
         List<String> args = Arrays.asList(_args);
         if (args.contains("sc")) {
@@ -43,18 +47,19 @@ public class MainApp {
             return;
         }
 
-        com.sun.net.httpserver.HttpServer rootServer = null;
-
+        Server server = null;
+        int port = -1;
         try {
 
             CollectorRegistry registry = CollectorRegistry.defaultRegistry;
 
             File jsonConfig = getConfigFile(logger);
             Config config = new Config(logger, jsonConfig);
-            int port = config.getPort(logger);
+            port = config.getPort(logger);
 
             List<SQLMetricPopulator> populators = new LinkedList<SQLMetricPopulator>();
-            for (SQLQuery query : config.getSQLQueries()) {
+            final List<SQLQuery> queries = config.getSQLQueries();
+            for (SQLQuery query : queries) {
                 populators.add(new SQLMetricPopulator(logger, registry, config,
                         new ConnectionManager(config),
                         query.getInterval(),
@@ -63,34 +68,58 @@ public class MainApp {
                         query.getShowHostname(),
                         query.getGaugePrefix()));
             }
-            rootServer = com.sun.net.httpserver.HttpServer.create();
-
-            try {
-                rootServer.bind(new InetSocketAddress(port), 100);
-            } catch (BindException e) {
-                throw new IOException("Port " + port + " is already in use", e);
-            }
             logger.println("Verifying metrics collection....");
             for (SQLMetricPopulator populator : populators) {
                 populator.gatherNow(12);
             }
             logger.println_success("Metrics collection verified.");
 
-            HTTPServer server = new HTTPServer.Builder()
-                    .withHttpServer(rootServer)
-                    .build();
+            ServletContextHandler context = new ServletContextHandler();
+            context.setContextPath("/");
+            server = new Server(port);
+            server.setHandler(context);
+            MetricsServlet metricsServlet = new MetricsServlet(registry);
+
+            ServletHolder nowGatherer = new ServletHolder(metricsServlet) {
+                public void handle(org.eclipse.jetty.server.Request baseRequest, javax.servlet.ServletRequest request,
+                        javax.servlet.ServletResponse response)
+                        throws javax.servlet.ServletException, javax.servlet.UnavailableException, IOException {
+                    for (SQLMetricPopulator queryPopulator : populators) {
+                        try {
+                            queryPopulator.gatherNow(4);
+                        } catch (SQLException e) {
+                            throw new IOException(e);
+                        }
+                    }
+                    super.handle(baseRequest, request, response);
+                };
+            };
+
+            context.addServlet(new ServletHolder(metricsServlet), "/metrics");
+            context.addServlet(nowGatherer, "/metrics_now");
+            context.addServlet(new ServletHolder(metricsServlet), "/");
+            server.start();
 
             String successMessage = "\n\n\n";
             successMessage += "==============================================================\n";
             successMessage += "Successfully started Prometheus client on port " + port + "\n";
             successMessage += "==============================================================\n";
             logger.println_success(successMessage);
-        } catch (Exception e) {
 
+            server.join();
+        } catch (Exception e) {
+            if (e instanceof BindException) {
+                logger.println_err("Port " + port + " is already in use");
+            }
             logger.printfln_err("ERROR: %s", e.getLocalizedMessage());
             logger.printExceptionStack_verbose(e);
-            if (null != rootServer) {
-                rootServer.stop(0);
+            if (null != server) {
+                try {
+                    server.stop();
+                } catch (Exception e1) {
+                    logger.printfln_err("ERROR: %s", e1.getLocalizedMessage());
+                    logger.printExceptionStack_verbose(e);
+                }
             }
         }
     }
