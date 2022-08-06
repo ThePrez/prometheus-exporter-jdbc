@@ -8,7 +8,23 @@ Any numeric metric available through SQL can be monitored using this client!
 This exporter was built for and tested on IBM i as a way to monitor IBM i system and application status through SQL.
 As such, its out-of-box-experience is centered around the IBM i use case.
 
-# Installation and Startup
+- [Installation and Startup](#installation-and-startup)
+  - [Using another JDBC driver](#using-another-jdbc-driver)
+  - [Using the `nohup` utility](#using-the-nohup-utility)
+- [Running on a different port](#running-on-a-different-port)
+- [Prometheus Configuration](#prometheus-configuration)
+- [JSON Configuration](#json-configuration)
+  - [Valid values for JSON configuration](#valid-values-for-json-configuration)
+    - [`queries` element](#queries-element)
+- [Collection data modes](#collection-data-modes)
+  - [Single-row mode](#single-row-mode)
+  - [Multi-row mode](#multi-row-mode)
+- [Collection timing modes](#collection-timing-modes)
+  - [Interval-based](#interval-based)
+  - [Point-in-time](#point-in-time)
+- [Managing with Service Commander (IBM i only)](#managing-with-service-commander-ibm-i-only)
+
+## Installation and Startup
 
 1. Download the latest `prom-client-ibmi.jar` file from
 [the releases page](https://github.com/ThePrez/Prom-client-IBMi/releases).
@@ -34,7 +50,7 @@ Successfully started Prometheus client on port 9853
 If you're not running on IBM i, you'll want to kill the program and modify
 `config.json` to have reasonable values for your needs. 
 
-## Using another JDBC driver
+### Using another JDBC driver
 
 The IBM i JDBC driver is bundled with this exporter. 
 If you'd like to use a different JDBC driver, you will need to specify the necessary options
@@ -45,14 +61,14 @@ explicitly add that driver to the class path. For instance:
 java -cp prom-client-ibmi.jar:myjdbcdriver.jar com.ibm.jesseg.prometheus.MainApp
 ```
 
-## Using the `nohup` utility
+### Using the `nohup` utility
 If you would like to run the program in the background so that you can exit
 your shell and keep the Prometheus client running, you can use the `nohup` utility:
 ```bash
 nohup java -jar prom-client-ibmi.jar > prom-client.log 2>&1
 ```
 
-# Running on a different port
+## Running on a different port
 
 The Prometheus client port can be customized in several ways. The port
 is determined by the following, in order of precedence:
@@ -61,7 +77,7 @@ is determined by the following, in order of precedence:
 - The `port` value of the JSON configuration file
 - The default value of 9853
 
-# Prometheus Configuration
+## Prometheus Configuration
 
 To configure Prometheus, just add a target to the `scrape_configs` as done
 in the following sample configuration:
@@ -73,7 +89,7 @@ scrape_configs:
     - targets: ['1.2.3.4:9853/metrics']
 ```
 
-# JSON Configuration
+## JSON Configuration
 
 See [config.json](./config.json) for an example JSON file, which contains the
 following:
@@ -119,28 +135,28 @@ Notes about the JSON configuration file:
 - For each query, the `interval` value represents the interval between data collection attempts
 for that query, in seconds.
 
-## Valid values for JSON configuration
+### Valid values for JSON configuration
 
 | Key name           | Type     | required? | Description                                      |
 | ------------------ | -------- | ----------| -------------------------------------------------|
+| `queries`          | array    | yes       | Array of elemnts specifying which SQL queries to run |  
 | `driver_class`     | String   | no        | The JDBC driver class (default: "com.ibm.as400.access.AS400JDBCDriver") |
 | `driver_uri`       | String   | no        | The JDBC connection string (default: "jdbc:as400://localhost")    | 
 | `hostname`         | String   | no        | The hostname of the system to connect to (default: localhost)      | 
 | `username`         | String   | no        | Username to be used for the connection | 
 | `password`         | String   | no        | Password for the connection. **NOT SECURE** |
-| `queries`          | array    | yes       | Array of elemnts specifying which SQL queries to run |  
 
 **NOTE: You may be prompted for any needed values (for instance, a password) at the command line if not specified in the JSON configuration**
 
 
-### `queries` element
+#### `queries` element
 
 The `queries` element contains an array. Each element in the array can have the following values:
 | Key name           | Type     | required? | Description                                      |
 | ------------------ | -------- | ----------| -------------------------------------------------|
 | `sql`              | String   | yes       | The SQL query                                    |
 | `name`             | String   | no        | A human-readable name for the query              | 
-| `interval`         | Integer  | yes       | The interval to wait between queries             | 
+| `interval`         | Integer  | no        | The interval to wait between queries (default: infinity)     | 
 | `prefix`           | String   | no        | A prefix to be used in the Prometheus gauge name | 
 | `include_hostname` | boolean  | no        | Whether to include the hostname in the Prometheus gauge name (default: true) |
 | `enabled`          | boolean  | no        | Whether this SQL query is enabled (default: true) |
@@ -160,9 +176,9 @@ hostname__prefix_identifier
 - The `hostname` can be excluded via configuration
 - The `identifier` is the column name when running in single-row mode
 
-# Collection modes
+## Collection data modes
 
-## Single-row mode
+### Single-row mode
 
 The default behavior for processing query output is single-row mode. If feasible, this is the recommended
 way to collect metrics. 
@@ -170,13 +186,36 @@ In single-row mode, only the first row of results are processed, but the gauge n
 since the identifier for the gauge is simply the column name. 
 
 
-## Multi-row mode
+### Multi-row mode
 
 Multi-row mode allows you to collect metrics from multiple rows of a JDBC query. When using multi-row mode,
 the value of the first column in each result is used to formulate a gauge name each time the query is run. 
 This has negative implications if the result set data does not have a consistent value in the first column.
 
-# Managing with Service Commander (IBM i only)
+## Collection timing modes
+
+### Interval-based
+
+The `interval` value for a query in the JSON configuration indicates how long to pause between queries.
+When using this technique, responses to Prometheus will be based on the most recent value collected.
+This could mean the same collection value is repeated in Prometheus, or that values may be lost. For
+instance, if using a 60-second query interval:
+- If Prometheus scrapes every two minutes, some values will not be propagated to Prometheus
+- If Prometheus scrapes every 30 seconds, the same collected value may be reported more than once
+
+For efficiency's sake, this is the default behavior. This allows for aggressive Prometheus scrape intervals
+without putting excessive load on the monitored system.
+
+
+### Point-in-time
+
+If omitted, the `interval` value for a query in the JSON configuration defaults to infinity. Metrics can be
+gathered upon-request by way of the `/metrics_now` endpoint. This approach provides the most up-to-date
+information to Prometheus, at intervals defined by Prometheus. However, use this approach with caution. 
+It exposes the monitored system to excessive load if metrics are scraped often. When using this approach,
+the exporter still limits the query frequency to 5-second intervals.
+
+## Managing with Service Commander (IBM i only)
 
 First, install Service Commander (package name `service-commander`)
 version 1.5.1 or later. 

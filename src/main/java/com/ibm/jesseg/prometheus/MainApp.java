@@ -81,13 +81,29 @@ public class MainApp {
             MetricsServlet metricsServlet = new MetricsServlet(registry);
 
             ServletHolder nowGatherer = new ServletHolder(metricsServlet) {
-                public void handle(org.eclipse.jetty.server.Request baseRequest, javax.servlet.ServletRequest request,
+                public synchronized void handle(org.eclipse.jetty.server.Request baseRequest,
+                        javax.servlet.ServletRequest request,
                         javax.servlet.ServletResponse response)
                         throws javax.servlet.ServletException, javax.servlet.UnavailableException, IOException {
+                    List<Thread> gatherNowThreads = new LinkedList<Thread>();
                     for (SQLMetricPopulator queryPopulator : populators) {
+                        Thread t = new Thread(new Runnable() {
+                            public void run() {
+                                try {
+                                    queryPopulator.gatherNow(5000);
+                                } catch (SQLException e) {
+                                    logger.exception(e);
+                                    return;
+                                }
+                            };
+                        }, "Gather NOW");
+                        gatherNowThreads.add(t);
+                        t.start();
+                    }
+                    for (Thread t : gatherNowThreads) {
                         try {
-                            queryPopulator.gatherNow(4);
-                        } catch (SQLException e) {
+                            t.join();
+                        } catch (InterruptedException e) {
                             throw new IOException(e);
                         }
                     }

@@ -104,8 +104,8 @@ public class Config {
       }
       Object intervalObj = query.get("interval");
       if (null == intervalObj) {
-        m_logger.printfln_err("No interval found for query '%s' in config file %s", sql, m_file.getAbsolutePath());
-        continue;
+        m_logger.printfln_verbose("INFO: No interval found for query '%s' in config file %s", sql, m_file.getAbsolutePath());
+        intervalObj = (long)Integer.MAX_VALUE;
       }
       boolean isIncludeHostname = true;
       Object isIncludeHostnameVal = query.get("include_hostname");
