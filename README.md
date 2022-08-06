@@ -1,6 +1,6 @@
 # JDBC Prometheus Exporter
 
-Prometheus exporter for IBM i and databases. This provides an interface for passive metrics collection. That is, Prometheus can scrape this exporter for metrics.
+Prometheus exporter for IBM i and other databases. This provides an interface for passive metrics collection. That is, Prometheus can scrape this exporter for metrics.
 
 Any JDBC driver may be used as a data source for Prometheus. The metrics are customizable. 
 Any numeric metric available through SQL can be monitored using this client!
