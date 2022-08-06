@@ -70,7 +70,7 @@ in the following sample configuration:
 scrape_configs:
   - job_name: 'prometheusibmi'
     static_configs:
-    - targets: ['1.2.3.4:9853']
+    - targets: ['1.2.3.4:9853/metrics']
 ```
 
 # JSON Configuration
