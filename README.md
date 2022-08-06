@@ -1,14 +1,18 @@
-# JDBC Prometheus Exporter for IBM i and databases
+# JDBC Prometheus Exporter
 
 Prometheus exporter for IBM i and databases. This provides an interface for passive metrics collection. That is, Prometheus can scrape this exporter for metrics.
 
-The metrics are customizable. Any numeric metric available through SQL can be monitored using this client.
+Any JDBC driver may be used as a data source for Prometheus. The metrics are customizable. 
+Any numeric metric available through SQL can be monitored using this client!
 
-# Installation and Startup (IBM i)
+This exporter was built for and tested on IBM i as a way to monitor IBM i system and application status through SQL.
+As such, its out-of-box-experience is centered around the IBM i use case.
+
+# Installation and Startup
 
 1. Download the latest `prom-client-ibmi.jar` file from
 [the releases page](https://github.com/ThePrez/Prom-client-IBMi/releases).
-Place this file in IFS somewhere. 
+Place this file the filesystem somewhere. 
 1. From a command line, `cd` to the directory where you placed
 `prom-client-ibmi.jar` and run:
 ```bash
@@ -27,12 +31,26 @@ Successfully started Prometheus client on port 8910
 ==============================================================
 ```
 
+If you're not running on IBM i, you'll want to kill the program and modify
+`config.json` to have reasonable values for your needs. 
+
+## Using another JDBC driver
+
+The IBM i JDBC driver is bundled with this exporter. 
+If you'd like to use a different JDBC driver, you will need to specify the necessary options
+in the configuration (namely, `driver_class` and `driver_uri`). You will also need to
+explicitly add that driver to the class path. For instance:
+
+```
+java -cp prom-client-ibmi.jar:myjdbcdriver.jar com.ibm.jesseg.prometheus.MainApp
+```
+
+## Using the `nohup` utility
 If you would like to run the program in the background so that you can exit
 your shell and keep the Prometheus client running, you can use the `nohup` utility:
 ```bash
 nohup java -jar prom-client-ibmi.jar > prom-client.log 2>&1
 ```
-
 
 # Running on a different port
 
