@@ -154,9 +154,9 @@ public class Config {
         }
         return m_displayHostname = localhost;
       }
-      m_displayHostname = getHostNameForConnection();
+      return m_displayHostname = getHostNameForConnection();
     }
-    return m_hostname = val.toString();
+    return m_displayHostname = val.toString();
   }
 
   public String getPassword() throws IOException {
