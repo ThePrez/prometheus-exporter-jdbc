@@ -62,21 +62,33 @@ following:
 ```json
 {
   "port": 8910,
-  "queries": [
-    {
+
+  "queries": [{
       "name": "System Statistics",
       "interval": 60,
+      "enabled": true,
+      "prefix": "STATS",
       "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_STATUS(RESET_STATISTICS=>'YES',DETAILED_INFO=>'ALL')) X"
     },
     {
       "name": "System Activity",
       "interval": 20,
-      "sql": "SELECT AVERAGE_CPU_UTILIZATION as AVERAGE_CPU_UTILIZATION_REAL, AVERAGE_CPU_RATE as AVERAGE_CPU_RATE_REAL FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())"
+      "prefix": "SYSACT",
+      "include_hostname": true,
+      "enabled": false,
+      "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())"
     },
     {
       "name": "number of remote connections",
       "interval": 60,
       "sql": "select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'"
+    },
+    {
+      "name": "Memory Pool Info",
+      "interval": 100,
+      "multi_row": true,
+      "prefix": "MEMPOOL",
+      "sql": "SELECT POOL_NAME,CURRENT_SIZE,DEFINED_SIZE,MAXIMUM_ACTIVE_THREADS,CURRENT_THREADS,RESERVED_SIZE FROM TABLE(QSYS2.MEMORY_POOL(RESET_STATISTICS=>'YES')) X"
     }
   ]
 }
@@ -89,16 +101,64 @@ Notes about the JSON configuration file:
 - For each query, the `interval` value represents the interval between data collection attempts
 for that query, in seconds.
 
+## Valid values for JSON configuration
+
+| Key name           | Type     | required? | Description                                      |
+| ------------------ | -------- | ----------| -------------------------------------------------|
+| `driver_class`     | String   | no        | The JDBC driver class (default: "com.ibm.as400.access.AS400JDBCDriver") |
+| `driver_uri`       | String   | no        | The JDBC connection string (default: "jdbc:as400://localhost")    | 
+| `hostname`         | String   | no        | The hostname of the system to connect to (default: localhost)      | 
+| `username`         | String   | no        | Username to be used for the connection | 
+| `password`         | String   | no        | Password for the connection. **NOT SECURE** |
+| `queries`          | array    | yes       | Array of elemnts specifying which SQL queries to run |  
+
+**NOTE: You may be prompted for any needed values (for instance, a password) at the command line if not specified in the JSON configuration**
+
+
+### `queries` element
+
+The `queries` element contains an array. Each element in the array can have the following values:
+| Key name           | Type     | required? | Description                                      |
+| ------------------ | -------- | ----------| -------------------------------------------------|
+| `sql`              | String   | yes       | The SQL query                                    |
+| `name`             | String   | no        | A human-readable name for the query              | 
+| `interval`         | Integer  | yes       | The interval to wait between queries             | 
+| `prefix`           | String   | no        | A prefix to be used in the Prometheus gauge name | 
+| `include_hostname` | boolean  | no        | Whether to include the hostname in the Prometheus gauge name (default: true) |
+| `enabled`          | boolean  | no        | Whether this SQL query is enabled (default: true) |
+| `multi_row`        | boolean  | no        | Whether to enable multi-row mode (default: false) |
+
+
+
 **IMPORTANT NOTES ABOUT COLLECTED METRICS**
 - Only numeric values will be collected
 - The values will be reported to Prometheus in the format
 ```
-hostname__column
+hostname__prefix_identifier
 ```
 (where `hostname` is the IBM i self-resolved hostname and `column` is the SQL column)
 - You can tailor the metric name in prometheus by changing the column name via the SQL query (using the SELECT `AS XXXX` syntax)
+- The `prefix` is only included if specified in the configuration
+- The `hostname` can be excluded via configuration
+- The `identifier` is the column name when running in single-row mode
 
-# Managing with Service Commander
+# Collection modes
+
+## Single-row mode
+
+The default behavior for processing query output is single-row mode. If feasible, this is the recommended
+way to collect metrics. 
+In single-row mode, only the first row of results are processed, but the gauge names can be computed up front,
+since the identifier for the gauge is simply the column name. 
+
+
+## Multi-row mode
+
+Multi-row mode allows you to collect metrics from multiple rows of a JDBC query. When using multi-row mode,
+the value of the first column in each result is used to formulate a gauge name each time the query is run. 
+This has negative implications if the result set data does not have a consistent value in the first column.
+
+# Managing with Service Commander (IBM i only)
 
 First, install Service Commander (package name `service-commander`)
 version 1.5.1 or later. 
@@ -146,7 +206,7 @@ For instance:
 
 (documentation forthcoming)
 
-# Metrics gathered with default config
+# Metrics gathered with default config (IBM i)
 
 - TOTAL_JOBS_IN_SYSTEM
 - MAXIMUM_JOBS_IN_SYSTEM
