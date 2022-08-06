@@ -1,7 +1,7 @@
 name: Prometheus client
 dir: .
 start_cmd: java -jar prom-client-ibmi.jar
-check_alive: '8910'
+check_alive: '9853'
 batch_mode: 'false'
 
 environment_vars:

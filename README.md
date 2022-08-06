@@ -27,7 +27,7 @@ You Should see a series of messages about collectors being registered. If you se
 following message, the client is running successfully:
 ```
 ==============================================================
-Successfully started Prometheus client on port 8910
+Successfully started Prometheus client on port 9853
 ==============================================================
 ```
 
@@ -59,7 +59,7 @@ is determined by the following, in order of precedence:
 - The `PORT` environment variable
 - The `promclient.port` Java system property
 - The `port` value of the JSON configuration file
-- The default value of 8910
+- The default value of 9853
 
 # Prometheus Configuration
 
@@ -70,7 +70,7 @@ in the following sample configuration:
 scrape_configs:
   - job_name: 'prometheusibmi'
     static_configs:
-    - targets: ['1.2.3.4:8910']
+    - targets: ['1.2.3.4:9853']
 ```
 
 # JSON Configuration
@@ -79,7 +79,7 @@ See [config.json](./config.json) for an example JSON file, which contains the
 following:
 ```json
 {
-  "port": 8910,
+  "port": 9853,
 
   "queries": [{
       "name": "System Statistics",

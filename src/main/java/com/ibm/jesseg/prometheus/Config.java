@@ -20,7 +20,7 @@ import com.ibm.as400.access.AS400JDBCDriver;
 
 public class Config {
 
-  public static final int DEFAULT_PORT = 8910;
+  public static final int DEFAULT_PORT = 9853;
   private final JSONObject m_json;
   private AppLogger m_logger;
   private File m_file;
