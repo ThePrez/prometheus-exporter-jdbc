@@ -29,12 +29,12 @@
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_servlet</artifactId>
       <version>0.16.0</version>
-  </dependency>
-  <dependency>
+    </dependency>
+    <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
       <version>9.4.48.v20220622</version>
-  </dependency>
+    </dependency>
     <dependency>
       <groupId>net.sf.jt400</groupId>
       <artifactId>jt400</artifactId>
