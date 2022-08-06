@@ -1,4 +1,4 @@
-package com.ibm.jesseg;
+package com.ibm.jesseg.prometheus;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;

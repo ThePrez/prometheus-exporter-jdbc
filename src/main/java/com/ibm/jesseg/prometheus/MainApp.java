@@ -1,4 +1,4 @@
-package com.ibm.jesseg;
+package com.ibm.jesseg.prometheus;
 
 import java.io.File;
 import java.io.FileOutputStream;
