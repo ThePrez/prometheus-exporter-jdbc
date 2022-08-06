@@ -1,10 +1,8 @@
-# Prometheus Client for IBM i
+# JDBC Prometheus Exporter for IBM i and databases
 
-Prometheus Client for IBM i. This provides an interface for passive metrics collection.
-That is, Prometheus can scrape IBM i (via this client) for metrics. 
+Prometheus exporter for IBM i and databases. This provides an interface for passive metrics collection. That is, Prometheus can scrape this exporter for metrics.
 
-The metrics are customizable. Any numeric metric available through SQL can
-be monitored using this client. 
+The metrics are customizable. Any numeric metric available through SQL can be monitored using this client.
 
 # Installation and Startup (IBM i)
 
