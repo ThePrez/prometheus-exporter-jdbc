@@ -12,7 +12,7 @@ import java.util.List;
 
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.ConsoleQuestionAsker;
-import com.ibm.jesseg.Config.SQLQuery;
+import com.ibm.jesseg.prometheus.Config.SQLQuery;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
