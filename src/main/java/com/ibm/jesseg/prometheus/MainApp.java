@@ -24,7 +24,7 @@ import io.prometheus.client.exporter.MetricsServlet;
 public class MainApp {
 
     public static void main(String[] _args) {
-        AppLogger logger = AppLogger.getSingleton(!Boolean.getBoolean("promclient.verbose"));
+        AppLogger logger = AppLogger.getSingleton(Boolean.getBoolean("promclient.verbose"));
 
         List<String> args = Arrays.asList(_args);
         if (args.contains("sc")) {
