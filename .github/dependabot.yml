@@ -4,3 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+    - dependency-name: jetty-servlet
+      versions:
+      - ">=10.0.0"
