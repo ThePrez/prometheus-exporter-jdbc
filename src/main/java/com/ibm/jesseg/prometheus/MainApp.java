@@ -10,9 +10,12 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.security.Constraint;
 
 import com.github.theprez.jcmdutils.AppLogger;
 import com.github.theprez.jcmdutils.ConsoleQuestionAsker;
@@ -114,6 +117,19 @@ public class MainApp {
             context.addServlet(new ServletHolder(metricsServlet), "/metrics");
             context.addServlet(nowGatherer, "/metrics_now");
             context.addServlet(new ServletHolder(metricsServlet), "/");
+
+            // Disable HTTP TRACE support
+            ConstraintSecurityHandler constraintHandler = new ConstraintSecurityHandler();
+            context.setSecurityHandler(constraintHandler);
+            Constraint constraint = new Constraint();
+            constraint.setAuthenticate(true);
+
+            ConstraintMapping mapping = new ConstraintMapping();
+            mapping.setPathSpec("/");
+            mapping.setMethod("TRACE");
+            mapping.setConstraint(constraint);
+            constraintHandler.addConstraintMapping(mapping);
+
             server.start();
 
             String successMessage = "\n\n\n";
