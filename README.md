@@ -84,9 +84,10 @@ in the following sample configuration:
 
 ```yaml
 scrape_configs:
-  - job_name: 'prometheusibmi'
+  - job_name: 'prometheus-jdbc'
+    metrics_path: '/metrics'
     static_configs:
-    - targets: ['1.2.3.4:9853/metrics']
+      - targets: ['1.2.3.4:9853']
 ```
 
 ## JSON Configuration
