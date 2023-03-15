@@ -94,16 +94,16 @@ public class SQLMetricPopulator {
     }
     m_logger.printfln_verbose("registering gauge: %s", _gaugeName);
     Gauge ret = Gauge.build()
-        .name(_gaugeName).help(_help).register();
+        .name(_gaugeName)
+        .help(_help)
+        .labelNames("hostname")
+        .register();
     m_gauges.put(_gaugeName, ret);
     return ret;
   }
 
   private String getGaugeName(String _columnName, String _rowName) {
     String ret = "";
-    if (m_includeHostname) {
-      ret += m_config.getHostNameForDisplay().replaceAll("\\..*", "") + "__";
-    }
     if (StringUtils.isNonEmpty(m_gaugePrefix)) {
       ret += m_gaugePrefix + "__";
     }
@@ -149,7 +149,7 @@ public class SQLMetricPopulator {
               }
             }
             double value = rs.getDouble(i);
-            gauge.set(value);
+            gauge.labels(m_config.getHostNameForDisplay().replaceAll("\\..*", "")).set(value);
           }
           if(!m_isMultiRow) {
             break;
