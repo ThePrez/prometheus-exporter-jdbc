@@ -104,6 +104,9 @@ public class SQLMetricPopulator {
 
   private String getGaugeName(String _columnName, String _rowName) {
     String ret = "";
+    if (m_includeHostname) {
+      ret += m_config.getHostNameForDisplay().replaceAll("\\..*", "") + "__";
+    }
     if (StringUtils.isNonEmpty(m_gaugePrefix)) {
       ret += m_gaugePrefix + "__";
     }
