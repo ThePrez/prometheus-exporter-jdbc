@@ -21,7 +21,6 @@ public class SQLMetricPopulator {
   private final String m_sql;
   private volatile long m_numCollections = 0;
 
-
   private final long m_interval;
 
   private PreparedStatement m_statement = null;
@@ -37,9 +36,9 @@ public class SQLMetricPopulator {
   private final Config m_config;
   private ConnectionManager m_connMan;
 
-  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config, 
-  ConnectionManager _connMan,
-  long _interval,
+  public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config,
+      ConnectionManager _connMan,
+      long _interval,
       boolean _isMultiRow,
       String _sql, boolean _includeHostname, String _gaugePrefix)
       throws IOException, SQLException {
@@ -96,7 +95,7 @@ public class SQLMetricPopulator {
     Gauge ret = Gauge.build()
         .name(_gaugeName)
         .help(_help)
-        .labelNames("hostname")
+        .labelNames("hostname", "driver_class")
         .register();
     m_gauges.put(_gaugeName, ret);
     return ret;
@@ -119,10 +118,10 @@ public class SQLMetricPopulator {
 
   private void gatherData() throws SQLException {
     synchronized (m_requestLock) {
-      if (!m_isMultiRow &&  0 == m_gauges.size()) {
+      if (!m_isMultiRow && 0 == m_gauges.size()) {
         return;
       }
-      m_logger.println_verbose("gathering metrics..."+m_sql);
+      m_logger.println_verbose("gathering metrics..." + m_sql);
       try {
         ResultSet rs = getStatement().executeQuery();
         ResultSetMetaData meta = rs.getMetaData();
@@ -152,9 +151,10 @@ public class SQLMetricPopulator {
               }
             }
             double value = rs.getDouble(i);
-            gauge.labels(m_config.getHostNameForDisplay().replaceAll("\\..*", "")).set(value);
+            gauge.labels(m_config.getHostNameForDisplay().replaceAll("\\..*", ""), m_config.getDriverClass())
+                .set(value);
           }
-          if(!m_isMultiRow) {
+          if (!m_isMultiRow) {
             break;
           }
         }
