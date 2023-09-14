@@ -6,7 +6,7 @@
   <groupId>com.ibm.jesseg</groupId>
   <artifactId>ibmi-prom-client</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
