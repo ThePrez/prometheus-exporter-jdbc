@@ -42,7 +42,7 @@ public class MainApp {
                 logger.printfln("    ln -sf %s $HOME/.sc/services/%s", yaml.getAbsolutePath(), yaml.getName());
                 logger.println("");
                 logger.println("Or, run the following command to register this service for all users:");
-                logger.printfln("    ln -sf %s /QOpenSys/etc/sf/services/%s", yaml.getAbsolutePath(), yaml.getName());
+                logger.printfln("    ln -sf %s /QOpenSys/etc/sc/services/%s", yaml.getAbsolutePath(), yaml.getName());
             } catch (Exception e) {
                 logger.printfln_err("Error writing prometheus.yml to file: %s", e.getMessage());
                 System.exit(-3);
