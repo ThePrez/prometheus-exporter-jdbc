@@ -9,6 +9,7 @@ This exporter was built for and tested on IBM i as a way to monitor IBM i system
 As such, its out-of-box-experience is centered around the IBM i use case.
 
 - [Installation and Startup](#installation-and-startup)
+  - [Known Breatking Changes](#known-breaking-changes)
   - [Using another JDBC driver](#using-another-jdbc-driver)
   - [Using the `nohup` utility](#using-the-nohup-utility)
 - [Running on a different port](#running-on-a-different-port)
@@ -49,6 +50,12 @@ Successfully started Prometheus client on port 9853
 
 If you're not running on IBM i, you'll want to kill the program and modify
 `config.json` to have reasonable values for your needs. 
+
+### Known breaking changes
+
+**In version 1.0**
+- The default value for `include_hostname` is now `false`. By default, the host name will not be included in the metric names (as the host name is included in the label). This may break existing configurations.
+- The SQL query specified can now contain multiple SQL statements, separated by `; `. This is implemented by a dump "split" and not by any SQL parser logic. As such, this will break any existing SQL query that correctly contains this string. 
 
 ### Using another JDBC driver
 
