@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,6 +38,7 @@ public class SQLMetricPopulator {
   private boolean m_isMultiRow;
   private final Config m_config;
   private ConnectionManager m_connMan;
+  private final LinkedList<String> m_prepSql;
 
   public SQLMetricPopulator(AppLogger _logger, CollectorRegistry _registry, Config _config,
       ConnectionManager _connMan,
@@ -43,7 +47,9 @@ public class SQLMetricPopulator {
       String _sql, boolean _includeHostname, String _gaugePrefix)
       throws IOException, SQLException {
     m_logger = _logger;
-    m_sql = _sql;
+    m_prepSql = new LinkedList<String>(Arrays.asList(_sql.split("; ")));
+    m_sql = m_prepSql.removeLast();
+
     m_interval = _interval;
     m_registry = _registry;
     m_includeHostname = _includeHostname;
@@ -61,11 +67,11 @@ public class SQLMetricPopulator {
         }
       }
     });
-    PreparedStatement statement = getStatement();
-    ResultSetMetaData metadata = statement.getMetaData();
-    int columnCount = metadata.getColumnCount();
-
     if (!m_isMultiRow) {
+      PreparedStatement statement = getStatement();
+      ResultSetMetaData metadata = statement.getMetaData();
+      int columnCount = metadata.getColumnCount();
+
       for (int i = 1; i <= columnCount; i++) {
         String columnName = metadata.getColumnName(i);
         String columnTypeStr = metadata.getColumnTypeName(i);
@@ -123,6 +129,11 @@ public class SQLMetricPopulator {
       }
       m_logger.println_verbose("gathering metrics..." + m_sql);
       try {
+        for (String stmt : m_prepSql) {
+            try (Statement s = m_connMan.getConnection().createStatement()) {
+              s.executeQuery(stmt);
+            }
+        }
         ResultSet rs = getStatement().executeQuery();
         ResultSetMetaData meta = rs.getMetaData();
         while (rs.next()) {
@@ -166,7 +177,7 @@ public class SQLMetricPopulator {
         }
       } catch (Exception e) {
         m_logger.println_err("ERROR!! ABORTING COLLECTION!! Cause: " + e.getLocalizedMessage());
-        m_logger.printExceptionStack_verbose(e);
+        m_logger.exception(e);
         for (Entry<String, Gauge> gaugeEntry : m_gauges.entrySet()) {
           Gauge gauge = gaugeEntry.getValue();
           m_registry.unregister(gauge);
