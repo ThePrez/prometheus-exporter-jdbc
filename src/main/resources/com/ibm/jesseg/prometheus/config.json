@@ -25,12 +25,13 @@
       "name": "Memory Pool Info",
       "interval": 100,
       "enabled": true,
+      "multi_row": true,
       "prefix": "MEMPOOL",
       "sql": "SELECT POOL_NAME,CURRENT_SIZE,DEFINED_SIZE,MAXIMUM_ACTIVE_THREADS,CURRENT_THREADS,RESERVED_SIZE FROM TABLE(QSYS2.MEMORY_POOL(RESET_STATISTICS=>'YES')) X"
     },
     {
       "name": "Plan Cache Analysis",
-      "interval": 300,
+      "interval": 45,
       "multi_row": true,
       "enabled": true,
       "prefix": "PLAN_CACHE",
@@ -56,7 +57,7 @@
       "name": "HTTP Server metrics",
       "interval": 60,
       "multi_row": true,
-      "enabled": false,
+      "enabled": true,
       "prefix": "HTTP",
       "sql": "select SERVER_NAME concat '_' concat replace(HTTP_FUNCTION, ' ','_') as SERVER_FUNC, SERVER_NORMAL_CONNECTIONS, SERVER_SSL_CONNECTIONS, SERVER_ACTIVE_THREADS, SERVER_IDLE_THREADS, SERVER_TOTAL_REQUESTS, SERVER_TOTAL_REQUESTS_REJECTED, SERVER_TOTAL_RESPONSES, REQUESTS, RESPONSES, NONCACHE_RESPONSES, BYTES_RECEIVED, BYTES_SENT, NONCACHE_PROCESSING_TIME, CACHE_PROCESSING_TIME from qsys2.HTTP_SERVER_INFO      "
     },

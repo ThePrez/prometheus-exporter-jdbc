@@ -116,21 +116,61 @@ following:
       "name": "System Activity",
       "interval": 20,
       "prefix": "SYSACT",
-      "include_hostname": true,
-      "enabled": false,
+      "enabled": true,
       "sql": "SELECT * FROM TABLE(QSYS2.SYSTEM_ACTIVITY_INFO())"
     },
     {
       "name": "number of remote connections",
-      "interval": 60,
+      "interval": 30,
+      "enabled": true,
       "sql": "select COUNT(REMOTE_ADDRESS) as REMOTE_CONNECTIONS from qsys2.netstat_info where TCP_STATE = 'ESTABLISHED' AND REMOTE_ADDRESS != '::1' AND REMOTE_ADDRESS != '127.0.0.1'"
     },
     {
       "name": "Memory Pool Info",
       "interval": 100,
+      "enabled": true,
       "multi_row": true,
       "prefix": "MEMPOOL",
       "sql": "SELECT POOL_NAME,CURRENT_SIZE,DEFINED_SIZE,MAXIMUM_ACTIVE_THREADS,CURRENT_THREADS,RESERVED_SIZE FROM TABLE(QSYS2.MEMORY_POOL(RESET_STATISTICS=>'YES')) X"
+    },
+    {
+      "name": "Plan Cache Analysis",
+      "interval": 45,
+      "multi_row": true,
+      "enabled": true,
+      "prefix": "PLAN_CACHE",
+      "sql": "CALL QSYS2.ANALYZE_PLAN_CACHE('03', '', '', BX'', '%'); select replace(upper(HEADING), ' ', '_') as HEADING, bigint(trim(TRANSLATE(VALUE ,  ' ', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(+-*/%=_&\"''()<>,.:;?) ' ))) as val from QTEMP.QDBOP00003"
+    },
+    {
+      "name": "Named Temp Storage bucjets",
+      "interval": 90,
+      "multi_row": true,
+      "enabled": true,
+      "prefix": "TMP_STG_BUCKETS",
+      "sql": "select replace(upper(REPLACE(GLOBAL_BUCKET_NAME, '*','')), ' ', '_') as NAME, BUCKET_CURRENT_SIZE as CURRENT_SIZE, BUCKET_PEAK_SIZE as PEAK_SIZE from QSYS2.SystmpSTG where GLOBAL_BUCKET_NAME IS NOT NULL"
+    },
+    {
+      "name": "Unnamed Temp Storage buckets",
+      "interval": 90,
+      "multi_row": false,
+      "enabled": true,
+      "prefix": "UNNAMED_TMP_STG_BUCKETS",
+      "sql": "select SUM(BUCKET_CURRENT_SIZE) as CURRENT_SIZE, sum(BUCKET_PEAK_SIZE) as PEAK_SIZE from QSYS2.SystmpSTG where GLOBAL_BUCKET_NAME IS NULL"
+    },
+    {
+      "name": "HTTP Server metrics",
+      "interval": 60,
+      "multi_row": true,
+      "enabled": true,
+      "prefix": "HTTP",
+      "sql": "select SERVER_NAME concat '_' concat replace(HTTP_FUNCTION, ' ','_') as SERVER_FUNC, SERVER_NORMAL_CONNECTIONS, SERVER_SSL_CONNECTIONS, SERVER_ACTIVE_THREADS, SERVER_IDLE_THREADS, SERVER_TOTAL_REQUESTS, SERVER_TOTAL_REQUESTS_REJECTED, SERVER_TOTAL_RESPONSES, REQUESTS, RESPONSES, NONCACHE_RESPONSES, BYTES_RECEIVED, BYTES_SENT, NONCACHE_PROCESSING_TIME, CACHE_PROCESSING_TIME from qsys2.HTTP_SERVER_INFO      "
+    },
+    {
+      "name": "System Values",
+      "interval": 333,
+      "multi_row": true,
+      "prefix": "SYSVAL",
+      "sql": "select SYSTEM_VALUE_NAME,CURRENT_NUMERIC_VALUE from QSYS2.SYSTEM_VALUE_INFO where CURRENT_NUMERIC_VALUE IS NOT NULL"
     }
   ]
 }
