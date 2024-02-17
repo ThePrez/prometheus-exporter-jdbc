@@ -139,10 +139,30 @@ following:
       "multi_row": true,
       "enabled": true,
       "prefix": "PLAN_CACHE",
-      "sql": "CALL QSYS2.ANALYZE_PLAN_CACHE('03', '', '', BX'', '%'); select replace(upper(HEADING), ' ', '_') as HEADING, bigint(trim(TRANSLATE(VALUE ,  ' ', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(+-*/%=_&\"''()<>,.:;?) ' ))) as val from QTEMP.QDBOP00003"
+      "sql": "call QSYS2.DUMP_PLAN_CACHE_PROPERTIES('QTEMP', 'PCPROP1');
+select replace(upper(HEADING), ' ', '_') as HEADING, value,
+       case
+         when
+           (left(value, 8) = '*DEFAULT')
+           then
+             substr(
+               value, locate_in_string(value, '(', 1) + 1, locate_in_string(value, ')', 1) -
+                 locate_in_string(value, '(', 1) - 1)
+         when (substr(value, 9, 1) = '(') then substr(value, 1, 8)
+         else value
+       end as value
+  from qtemp.pcprop1
+  where value is not null and
+        value <> '*AUTO' and
+        length(trim(value)) > 0 and
+        value <> '-' and
+        replace(upper(HEADING), ' ', '_') not in ('TIME_OF_SUMMARY',
+          'PLAN_CACHE_CREATION_TIME', 'LAST_PLAN_CACHE_AUTOSIZING_ADJUSTMENT',
+          'LAST_AUTOSIZING_LIMITED_DUE_TO_TEMPORARY_STORAGE', 'TIME_PLAN_CACHE_WAS_LAST_PRUNED',
+          'ACTIVITY_THRESHOLDS_START_TIME')"
     },
     {
-      "name": "Named Temp Storage bucjets",
+      "name": "Named Temp Storage buckets",
       "interval": 90,
       "multi_row": true,
       "enabled": true,
@@ -187,7 +207,7 @@ for that query, in seconds.
 
 | Key name           | Type     | required? | Description                                      |
 | ------------------ | -------- | ----------| -------------------------------------------------|
-| `queries`          | array    | yes       | Array of elemnts specifying which SQL queries to run |  
+| `queries`          | array    | yes       | Array of elements specifying which SQL queries to run |  
 | `driver_class`     | String   | no        | The JDBC driver class (default: "com.ibm.as400.access.AS400JDBCDriver") |
 | `driver_uri`       | String   | no        | The JDBC connection string (default: "jdbc:as400://localhost")    | 
 | `hostname`         | String   | no        | The hostname of the system to connect to (default: localhost)      | 
